@@ -107,6 +107,7 @@
     touch-action: manipulation;
 }
 #mxj-root .mxj-icon-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+#mxj-root .mxj-icon-btn:disabled { opacity: .4; cursor: default; }
 #mxj-root .mxj-icon-btn.is-solid { background: var(--mxj-green); color: var(--mxj-paper); border-radius: 12px; }
 
 /* 状态条 */
@@ -270,7 +271,7 @@
 #mxj-root .mxj-chip.is-on.is-red { background: var(--mxj-red); border-color: var(--mxj-red); color: #FFFFFF; }
 
 /* 底部入口 */
-#mxj-root .mxj-entries { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; flex: none; }
+#mxj-root .mxj-entries { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; flex: none; }
 #mxj-root .mxj-entry {
     position: relative;
     display: flex; flex-direction: column; align-items: center; gap: 6px;
@@ -351,3 +352,55 @@
     #mxj-root { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
     #mxj-root .mxj-window { max-width: none; max-height: none; border-radius: 0; box-shadow: none; }
 }
+
+/* 布置 */
+#mxj-root .mxj-center { text-align: center; }
+#mxj-root .mxj-deco-bar { flex: none; position: sticky; top: 0; z-index: 2; background: var(--mxj-ground); padding: 2px 0 6px; margin-bottom: -6px; }
+#mxj-root .mxj-deco-bar .mxj-muted { font-size: 12px; line-height: 1.3; }
+#mxj-root .mxj-done { min-width: 72px; min-height: 44px; }
+#mxj-root .mxj-scene.is-decorating { touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+#mxj-root .mxj-furniture.is-draggable { cursor: grab; }
+#mxj-root .mxj-furniture.is-dragging { opacity: .85; cursor: grabbing; filter: drop-shadow(0 6px 6px rgba(0, 0, 0, .3)); }
+#mxj-root .mxj-tools { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+#mxj-root .mxj-tool {
+    min-height: 56px; padding: 6px 2px; border: 1px solid var(--mxj-line-soft); border-radius: 12px;
+    background: var(--mxj-white); color: var(--mxj-ink); font-size: 12px; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    touch-action: manipulation;
+}
+#mxj-root .mxj-tool svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+#mxj-root .mxj-tool.is-danger { color: var(--mxj-red); }
+#mxj-root .mxj-colors { display: flex; flex-wrap: wrap; gap: 8px; }
+#mxj-root .mxj-color {
+    width: 34px; height: 34px; border-radius: 17px; padding: 0; cursor: pointer;
+    border: 2px solid rgba(0, 0, 0, .12); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .5);
+}
+#mxj-root .mxj-color.is-on { border: 3px solid var(--mxj-ink); box-shadow: inset 0 0 0 2px #FFFFFF; }
+#mxj-root .mxj-drawer-card {
+    background: var(--mxj-paper); border-radius: 16px; padding: 10px 12px 14px;
+    display: flex; flex-direction: column; gap: 10px;
+}
+#mxj-root .mxj-tabs { display: flex; gap: 4px; overflow-x: auto; flex: none; padding-bottom: 2px; }
+#mxj-root .mxj-tab {
+    flex: none; min-height: 36px; padding: 0 12px; border: 0; border-radius: 10px;
+    background: transparent; color: var(--mxj-muted); font-size: 13px; cursor: pointer;
+}
+#mxj-root .mxj-tab.is-on { background: var(--mxj-ground); color: var(--mxj-ink); font-weight: 700; }
+#mxj-root .mxj-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+#mxj-root .mxj-tile {
+    position: relative; min-height: 104px; padding: 8px 4px; cursor: pointer;
+    border: 1px solid var(--mxj-line-soft); border-radius: 14px; background: var(--mxj-white); color: var(--mxj-ink);
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px;
+}
+#mxj-root .mxj-tile-pic { width: 56px; height: 56px; display: block; }
+#mxj-root .mxj-tile-pic svg { width: 100%; height: 100%; display: block; }
+#mxj-root .mxj-tile-name { font-size: 13px; line-height: 1.3; text-align: center; }
+#mxj-root .mxj-tile-why { font-size: 11px; line-height: 1.35; color: var(--mxj-muted); text-align: center; }
+#mxj-root .mxj-tile-badge {
+    position: absolute; top: 6px; left: 6px; font-style: normal;
+    font-size: 11px; background: #24343C; color: var(--mxj-paper); border-radius: 6px; padding: 1px 6px;
+}
+#mxj-root .mxj-tile.is-make {
+    justify-content: center; border: 1.5px dashed var(--mxj-green); background: var(--mxj-green-soft); color: var(--mxj-green);
+}
+#mxj-root .mxj-tile.is-make svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }

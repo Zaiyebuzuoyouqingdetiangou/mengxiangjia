@@ -1,14 +1,15 @@
 // 梦想家 · 界面
-import { esc, formatTime, daysSince, LOG_PREFIX } from './util.js?mxj=0.1.0';
-import { getSettings, updateSettings, currentCharacter, getHome, setHome, removeHome } from './settings.js?mxj=0.1.0';
-import { renderRoom, renderFloorPlan, SCENE_W, SCENE_H, CATALOG } from './furniture.js?mxj=0.1.0';
-import { characterView, avatarUrl } from './character.js?mxj=0.1.0';
+import { esc, formatTime, daysSince, LOG_PREFIX } from './util.js?mxj=0.2.0';
+import { getSettings, updateSettings, currentCharacter, getHome, setHome, removeHome } from './settings.js?mxj=0.2.0';
+import { renderRoom, renderFloorPlan, SCENE_W, SCENE_H, CATALOG } from './furniture.js?mxj=0.2.0';
+import { characterView, avatarUrl } from './character.js?mxj=0.2.0';
 import {
     HOUSE_SIZES, NOTE_KINDS, NOTE_PLACES,
     designHouse, createHome, comeHome, respond, postNote, replyToNote,
     markCharNotesRead, unreadFromChar, shouldAutoVisit, isAway,
-} from './home.js?mxj=0.1.0';
-import { listConnectionProfiles, fetchManualModels, testConnection } from './api.js?mxj=0.1.0';
+} from './home.js?mxj=0.2.0';
+import { listConnectionProfiles, fetchManualModels, testConnection } from './api.js?mxj=0.2.0';
+import { createDecorator } from './decorate.js?mxj=0.2.0';
 
 const ROOT_ID = 'mxj-root';
 
@@ -18,6 +19,7 @@ const ICON = {
     gear: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>',
     note: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11l3 3v13H5z"/><path d="M8 10h8M8 14h6"/></svg>',
     house: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>',
+    sofa: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 11V8a3 3 0 013-3h8a3 3 0 013 3v3"/><rect x="3" y="11" width="18" height="6" rx="2"/><path d="M6 17v2M18 17v2"/></svg>',
     log: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2z"/><path d="M4 21V5M9 8h6M9 12h6"/></svg>',
     mail: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M4 7l8 6 8-6"/></svg>',
     pen: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>',
@@ -40,6 +42,7 @@ const state = {
 let root = null;
 let viewportCleanup = null;
 let originFocus = null;
+const decorator = createDecorator({ state, render, run, flash, getRoot: () => root });
 
 // ---------------- 打开 / 关闭 ----------------
 
@@ -121,6 +124,10 @@ export function open() {
 
 export function close() {
     if (!root) return;
+    if (state.view === 'decorate') {
+        const c = currentCharacter();
+        if (c) decorator.leave(c);
+    }
     state.abort?.abort();
     if (root.open && typeof root.close === 'function') root.close();
     root.removeAttribute('open');
@@ -157,9 +164,10 @@ function render() {
     renderStatus();
     const main = root.querySelector('.mxj-main');
     const scrollTop = main.scrollTop;
-    const views = { home: viewHome, build: viewBuild, notes: viewNotes, log: viewLog, settings: viewSettings, nochar: viewNoChar };
+    const views = { home: viewHome, build: viewBuild, notes: viewNotes, log: viewLog, settings: viewSettings, nochar: viewNoChar, decorate: decorator.view };
     main.innerHTML = (views[state.view] || viewHome)(char, home);
-    if (state.keepScroll) main.scrollTop = scrollTop;
+    if (state.view === 'decorate' && char) decorator.attach(char);
+    main.scrollTop = state.keepScroll ? scrollTop : 0;
     state.keepScroll = false;
     if (state.view === 'notes' && char && home) markCharNotesRead(char);
 }
@@ -171,6 +179,7 @@ function titles(char, home) {
         case 'notes': return ['小纸条', `${(home?.notes || []).length} 张`];
         case 'log': return ['回家记录', `${(home?.visits || []).length} 次`];
         case 'settings': return ['梦想家设置', '生成 · 读取 · 回家'];
+        case 'decorate': return ['布置', home?.house?.name || ''];
         case 'nochar': return ['梦想家', ''];
         default: return [home?.house ? `${name}的家` : '梦想家', home?.house ? `${home.house.name} · 住了 ${daysSince(home.createdAt)} 天` : ''];
     }
@@ -253,6 +262,7 @@ function viewHome(char, home) {
       </div>
       ${state.selectedFurniture ? furnitureCard(home, away) : eventCard(char, home, away)}
       <nav class="mxj-entries" aria-label="小屋功能">
+        <button type="button" class="mxj-entry" data-act="decorate">${ICON.sofa}<span>布置</span></button>
         <button type="button" class="mxj-entry" data-act="go" data-view="notes">${ICON.note}<span>小纸条</span>${unread ? `<i class="mxj-badge">${unread}</i>` : ''}</button>
         <button type="button" class="mxj-entry" data-act="go" data-view="log">${ICON.log}<span>回家记录</span></button>
         <button type="button" class="mxj-entry" data-act="go" data-view="build">${ICON.house}<span>房子档案</span></button>
@@ -278,7 +288,8 @@ function eventCard(char, home, away) {
     const turns = (visit.turns || []).slice(-4).map(t => `
         <div class="mxj-turn is-user">${esc(t.user)}</div>
         <div class="mxj-turn">${esc(t.reply)}</div>`).join('');
-    const options = (visit.options || []).map(o => `<button type="button" class="mxj-btn" data-act="option" data-text="${esc(o)}">${esc(o)}</button>`).join('');
+    let options = (visit.options || []).map(o => `<button type="button" class="mxj-btn" data-act="option" data-text="${esc(o)}">${esc(o)}</button>`).join('');
+    if (state.newLayout) options = `<button type="button" class="mxj-btn is-primary" data-act="show-layout">叫他来看看新布置</button>${options}`;
     return `<section class="mxj-card">
       <div class="mxj-event-head">
         <span class="mxj-avatar">${url ? `<img src="${esc(url)}" alt="">` : esc(name.slice(0, 1))}</span>
@@ -580,6 +591,8 @@ async function doVisit() {
     if (!char) return;
     const name = characterView(char).name;
     await run(`${name}正在回家的路上…`, signal => comeHome(char, { signal }));
+    const h = getHome(char);
+    if (h && h.changesSeenAt >= Date.now() - 60000) state.newLayout = '';
 }
 
 async function doRespond(text, furnitureId = '') {
@@ -610,7 +623,27 @@ function onClick(event) {
     const char = currentCharacter();
     switch (act) {
         case 'close': close(); break;
-        case 'back': go(char && getHome(char)?.house ? 'home' : 'build'); break;
+        case 'back':
+            if (state.view === 'decorate' && char) decorator.leave(char);
+            else go(char && getHome(char)?.house ? 'home' : 'build');
+            break;
+        case 'decorate':
+            if (!char) break;
+            decorator.enter(char);
+            go('decorate');
+            break;
+        case 'show-layout': {
+            const summary = state.newLayout;
+            state.newLayout = '';
+            void doRespond(`你把家里重新布置了一下（${summary}），叫他过来看看`).then(() => {
+                const h = getHome(char);
+                if (h) {
+                    h.changesSeenAt = Date.now();
+                    setHome(char, h);
+                }
+            });
+            break;
+        }
         case 'settings': go('settings'); break;
         case 'go': go(el.dataset.view); break;
         case 'cancel': state.abort?.abort(); break;
@@ -625,6 +658,12 @@ function onClick(event) {
             break;
         }
         case 'furniture':
+            if (state.view === 'decorate') {
+                state.deco.selected = el.dataset.id;
+                state.keepScroll = true;
+                render();
+                break;
+            }
             state.selectedFurniture = state.selectedFurniture === el.dataset.id ? '' : el.dataset.id;
             state.keepScroll = true;
             render();
@@ -681,7 +720,9 @@ function onClick(event) {
                 go('build');
             }
             break;
-        default: break;
+        default:
+            if (act.startsWith('deco-') && char) decorator.onAct(act, el, char);
+            break;
     }
 }
 
@@ -714,6 +755,13 @@ function onChange(event) {
         case 'deferred': state.composer.deferred = value; return;
         case 'extra': state.draft.extra = value; return;
         case 'noteText': state.composer.text = value; return;
+        case 'decoName': {
+            const c = currentCharacter();
+            if (c) decorator.rename(c, value);
+            state.keepScroll = true;
+            render();
+            return;
+        }
         case 'modelSelect':
             if (value) {
                 updateSettings({ independentApiModel: value });
@@ -749,6 +797,10 @@ document.addEventListener('submit', event => {
     const input = form.querySelector('input');
     const text = input?.value || '';
     if (form.dataset.form === 'say') void doRespond(text);
+    if (form.dataset.form === 'deco-describe') {
+        const c = currentCharacter();
+        if (c) void decorator.describe(c, text);
+    }
     if (form.dataset.form === 'furniture-say') {
         const f = state.selectedFurniture;
         void doRespond(text, f);
@@ -760,6 +812,7 @@ export function onChatChanged() {
     if (!root?.open) return;
     state.abort?.abort();
     state.draft.proposal = null;
+    state.newLayout = '';
     const char = currentCharacter();
     const home = char ? getHome(char) : null;
     state.view = !char ? 'nochar' : (home?.house ? 'home' : 'build');

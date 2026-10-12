@@ -1,9 +1,9 @@
 // 梦想家 · 家的数据与生成
-import { uid, now, parseJsonLoose, asText, hexOr, clip } from './util.js?mxj=0.1.0';
-import { generate } from './api.js?mxj=0.1.0';
-import { gatherContext, contextBlock } from './character.js?mxj=0.1.0';
-import { getHome, setHome, getSettings } from './settings.js?mxj=0.1.0';
-import { CATALOG, CATALOG_PROMPT, DEFAULT_PALETTE } from './furniture.js?mxj=0.1.0';
+import { uid, now, parseJsonLoose, asText, hexOr, clip } from './util.js?mxj=0.2.0';
+import { generate } from './api.js?mxj=0.2.0';
+import { gatherContext, contextBlock } from './character.js?mxj=0.2.0';
+import { getHome, setHome, getSettings } from './settings.js?mxj=0.2.0';
+import { CATALOG, CATALOG_PROMPT, DEFAULT_PALETTE } from './furniture.js?mxj=0.2.0';
 
 export const NOTE_KINDS = ['道歉', '纪念', '日常', '想你', '谢谢', '生气了'];
 export const NOTE_PLACES = ['门边', '冰箱', '枕边', '书桌'];
@@ -177,7 +177,7 @@ ${recentLog(home) || '（这是第一次回家）'}
 
 # 最近的纸条
 ${notesHistory(home) || '（还没有纸条）'}
-
+${pendingChanges(home).length ? `\n# 他上次离开后，用户对家里做的改动（他回家会注意到，可以自然地提一句或用一用新东西）\n${pendingChanges(home).map(c => `- ${c.text}`).join('\n')}\n` : ''}
 # 现在
 ${nowLine()}，${info.char.name}回到家。
 ${unread.length ? `用户留了 ${unread.length} 张他还没看到的纸条，他回家会看到并回信：\n${unread.map(n => `- id=${n.id}｜${n.kind}｜贴在${n.place}｜${n.text}`).join('\n')}` : '没有未读的纸条。'}
@@ -217,6 +217,7 @@ function applyVisit(char, parsed, raw, unread) {
     home.visits.push(visit);
     home.presence = { atHome: true, activity: visit.activity, mood: visit.mood, spot, since: visit.at };
     home.lastVisitAt = visit.at;
+    home.changesSeenAt = visit.at;
     if (spot) {
         const f = home.house.furniture.find(x => x.id === spot);
         if (f) home.currentRoom = f.room;
@@ -382,4 +383,105 @@ export function isAway(home) {
     // 隔了很久没回家，就当他出门了
     const gap = Math.max(60, s.visitGapMinutes) * 60000;
     return Date.now() - home.lastVisitAt >= gap;
+}
+
+// ---------------- 布置 ----------------
+
+export function pendingChanges(home) {
+    const seen = Number(home?.changesSeenAt) || 0;
+    return (home?.changes || []).filter(c => c.at > seen).slice(-12);
+}
+
+export function recordChanges(char, texts) {
+    const list = [...new Set((texts || []).map(t => String(t || '').trim()).filter(Boolean))];
+    if (!list.length) return;
+    const home = getHome(char);
+    if (!home) return;
+    home.changes ||= [];
+    const at = now();
+    for (const text of list) home.changes.push({ at, text });
+    if (home.changes.length > 30) home.changes = home.changes.slice(-30);
+    setHome(char, home);
+}
+
+function normalizeItem(raw, fallbackName = '') {
+    const r = raw && typeof raw === 'object' ? raw : {};
+    let type = String(r.type || '').trim().toLowerCase();
+    if (!CATALOG[type]) type = guessType(`${r.name || ''} ${fallbackName}`);
+    if (!type) return null;
+    return {
+        type,
+        name: asText(r.name, 16) || clip(fallbackName, 16) || CATALOG[type].label,
+        color: hexOr(r.color, ''),
+        why: asText(r.why || r.reason, 60),
+    };
+}
+
+// 模型没按格式给类型时，用中文名猜一个最接近的
+export function guessType(text) {
+    const s = String(text || '');
+    const hints = [
+        ['bed', /床/], ['sofa', /沙发|躺椅|长椅/], ['bookshelf', /书架|书柜/], ['bookstack', /书/], ['wardrobe', /衣柜|衣橱/],
+        ['desk', /书桌|写字台|工作台|桌子/], ['diningtable', /餐桌|饭桌/], ['table', /茶几|小桌|边桌/], ['chair', /椅|凳/],
+        ['lamp', /落地灯|台灯|灯/], ['stringlights', /串灯|灯串|星星灯/], ['plant', /植|花|草|树|盆栽|多肉/], ['rug', /地毯|毯/],
+        ['window', /窗/], ['painting', /画|海报/], ['photo', /相框|照片|合照/], ['mirror', /镜/], ['clock', /钟|表/],
+        ['wallshelf', /置物架|搁板|墙架/], ['tv', /电视|屏幕|投影/], ['piano', /钢琴|琴/], ['guitar', /吉他|贝斯|尤克里里/],
+        ['recordplayer', /唱片|音响|留声机/], ['fridge', /冰箱/], ['stove', /灶|炉|厨房/], ['bathtub', /浴缸|浴盆/],
+        ['aquarium', /鱼缸|鱼/], ['petbed', /猫窝|狗窝|宠物/], ['cushion', /坐垫|靠垫|抱枕|垫/], ['coatrack', /衣帽架|挂衣/],
+        ['cabinet', /柜/],
+    ];
+    for (const [type, re] of hints) if (re.test(s)) return type;
+    return '';
+}
+
+const SUGGEST_SYSTEM = `你在扮演角色，和用户一起布置你们共同的家。按你的性格、习惯和喜好，挑几件你想放进这个房间的东西，并用你自己的口吻说一句为什么。
+只输出一个 JSON 对象。`;
+
+export async function suggestFurniture(char, roomId, { signal } = {}) {
+    const home = getHome(char);
+    const room = home?.house?.rooms.find(r => r.id === roomId);
+    if (!room) throw new Error('找不到这个房间');
+    const info = await gatherContext(char);
+    const user = `${contextBlock(info, { withRecent: false })}
+
+# 你们的家
+${houseSummary(home)}
+
+# 现在布置的房间
+${room.name}${room.note ? `（${room.note}）` : ''}
+
+# 要求
+挑 3 到 4 件，类型只能从这些里选（type 用英文 id）：${CATALOG_PROMPT}
+颜色用 #RRGGBB；name 是你给它起的具体名字；why 是你说的一句话（15 字以内，第一人称）。
+
+# 输出格式
+{ "items": [ { "type": "plant", "name": "窗台上的薄荷", "color": "#4F8360", "why": "泡茶的时候能掐两片" } ] }`;
+    const raw = await generate({ system: SUGGEST_SYSTEM, user, signal, maxTokens: 1500 });
+    const parsed = parseJsonLoose(raw);
+    const list = Array.isArray(parsed?.items) ? parsed.items : (Array.isArray(parsed) ? parsed : []);
+    const items = list.map(x => normalizeItem(x)).filter(Boolean).slice(0, 4);
+    const fresh = getHome(char);
+    fresh.suggestions = { roomId, at: now(), items };
+    setHome(char, fresh);
+    return items;
+}
+
+const DESCRIBE_SYSTEM = `你是家具设计师。把用户描述的一件家具或摆设，对应到给定的类型里最接近的一种，并起一个具体的名字、选一个颜色。只输出一个 JSON 对象。`;
+
+export async function furnitureFromText(char, text, { signal } = {}) {
+    const desc = String(text || '').trim();
+    const user = `用户想要：${desc}
+
+类型只能从这些里选（type 用英文 id）：${CATALOG_PROMPT}
+输出格式：{ "type": "…", "name": "具体名字（12 字以内）", "color": "#RRGGBB" }`;
+    let parsed = null;
+    try {
+        const raw = await generate({ system: DESCRIBE_SYSTEM, user, signal, maxTokens: 600 });
+        parsed = parseJsonLoose(raw);
+    } catch (error) {
+        if (signal?.aborted) throw error;
+        // 生成失败时直接按描述猜，不让这一步卡住
+        console.warn('[梦想家] 按描述生成家具失败，改用名称推断', error);
+    }
+    return normalizeItem(parsed, desc) || { type: guessType(desc) || 'cabinet', name: clip(desc, 16), color: '', why: '' };
 }

@@ -1,6 +1,6 @@
 // 梦想家 · 入口：魔法棒菜单 + 扩展设置里的打开按钮
-import { getSettings } from './src/settings.js?mxj=0.1.0';
-import { ctx, LOG_PREFIX } from './src/util.js?mxj=0.1.0';
+import { getSettings } from './src/settings.js?mxj=0.2.0';
+import { ctx, LOG_PREFIX } from './src/util.js?mxj=0.2.0';
 
 const WAND_ID = 'mxj_wand_entry';
 const DRAWER_ID = 'mxj_settings_drawer';
@@ -11,7 +11,7 @@ let clickHandler = null;
 let chatHandler = null;
 
 async function loadUi() {
-    if (!uiModule) uiModule = await import('./src/ui.js?mxj=0.1.0');
+    if (!uiModule) uiModule = await import('./src/ui.js?mxj=0.2.0');
     return uiModule;
 }
 

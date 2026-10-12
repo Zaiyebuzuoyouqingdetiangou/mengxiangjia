@@ -456,3 +456,29 @@
     display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
 }
 #mxj-root .mxj-quote-item b { margin-right: 6px; }
+
+#mxj-root .mxj-places.is-two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+#mxj-root .mxj-places.is-two .mxj-place { min-height: 44px; font-size: 14px; }
+#mxj-root .mxj-card.is-dim h3 { color: var(--mxj-muted); }
+
+/* 扩展设置抽屉里的副 API 设置（用酒馆自己的样式） */
+.mxj-drawer .mxj-api { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.mxj-drawer .mxj-api label { display: flex; flex-direction: column; gap: 4px; }
+.mxj-drawer .mxj-api .mxj-api-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.mxj-drawer .mxj-api .mxj-api-row > .text_pole { flex: 1; min-width: 0; }
+.mxj-drawer .mxj-api .mxj-api-radio { flex-direction: row; align-items: center; gap: 6px; }
+.mxj-drawer .mxj-api-status { font-size: 0.9em; opacity: 0.85; min-height: 1.2em; }
+.mxj-drawer .mxj-api hr { width: 100%; opacity: 0.3; }
+.mxj-drawer .menu_button {
+    writing-mode: horizontal-tb !important;
+    white-space: nowrap;
+    width: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 12px;
+    min-height: 36px;
+    flex: none;
+}
+.mxj-drawer .mxj-drawer-open { margin-bottom: 4px; }
+.mxj-drawer .mxj-api .mxj-api-row label { flex: 1; min-width: 120px; }

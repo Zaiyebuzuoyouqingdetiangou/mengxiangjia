@@ -1,6 +1,6 @@
 // 梦想家 · 家具图库与房间绘制
 // 房间是正面剖面图：viewBox 360×300，墙 0–210，地板 210–300。
-import { esc, shade, hexOr, luminance } from './util.js?mxj=0.3.0';
+import { esc, shade, hexOr, luminance } from './util.js?mxj=0.3.1';
 
 export const SCENE_W = 360;
 export const SCENE_H = 300;

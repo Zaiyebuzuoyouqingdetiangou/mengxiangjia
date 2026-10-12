@@ -1,6 +1,6 @@
 // 梦想家 · 入口：魔法棒菜单 + 扩展设置里的打开按钮
-import { getSettings } from './src/settings.js?mxj=0.3.0';
-import { ctx, LOG_PREFIX } from './src/util.js?mxj=0.3.0';
+import { getSettings } from './src/settings.js?mxj=0.3.1';
+import { ctx, LOG_PREFIX } from './src/util.js?mxj=0.3.1';
 
 const WAND_ID = 'mxj_wand_entry';
 const DRAWER_ID = 'mxj_settings_drawer';
@@ -11,7 +11,7 @@ let clickHandler = null;
 let chatHandler = null;
 
 async function loadUi() {
-    if (!uiModule) uiModule = await import('./src/ui.js?mxj=0.3.0');
+    if (!uiModule) uiModule = await import('./src/ui.js?mxj=0.3.1');
     return uiModule;
 }
 
@@ -73,14 +73,18 @@ function installSettingsDrawer() {
           <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
         </div>
         <div class="inline-drawer-content">
-          <p class="mxj-drawer-text">和角色一起住的小家。平时从魔法棒进入，也可以在这里打开。</p>
+          <p class="mxj-drawer-text">和角色一起住的小家。平时从魔法棒进入，也可以在这里打开。下面是生成用的 API 设置，和面板里右上角齿轮的设置是同一份。</p>
           <button type="button" class="menu_button mxj-drawer-open">打开梦想家</button>
+          <div class="mxj-api"></div>
         </div>
       </div>`;
     wrap.querySelector('.mxj-drawer-open').addEventListener('click', event => {
         void openPanel(event.currentTarget);
     });
     host.append(wrap);
+    import('./src/apiSettings.js?mxj=0.3.1')
+        .then(mod => mod.mountApiSettings(wrap.querySelector('.mxj-api')))
+        .catch(error => console.error(LOG_PREFIX, 'API 设置加载失败', error));
 }
 
 function init() {

@@ -1,18 +1,18 @@
 // 梦想家 · 界面
-import { esc, formatTime, daysSince, LOG_PREFIX, ctx, clip } from './util.js?mxj=0.3.0';
-import { getSettings, updateSettings, currentCharacter, getHome, setHome, removeHome } from './settings.js?mxj=0.3.0';
-import { renderRoom, renderFloorPlan, SCENE_W, SCENE_H, CATALOG } from './furniture.js?mxj=0.3.0';
-import { characterView, avatarUrl } from './character.js?mxj=0.3.0';
-import { spriteInRoom, spriteSvg, poseFor, HAIR_STYLES, ACCESSORIES, LOOK_COLORS } from './sprite.js?mxj=0.3.0';
+import { esc, formatTime, daysSince, LOG_PREFIX, ctx, clip } from './util.js?mxj=0.3.1';
+import { getSettings, updateSettings, currentCharacter, getHome, setHome, removeHome } from './settings.js?mxj=0.3.1';
+import { renderRoom, renderFloorPlan, SCENE_W, SCENE_H, CATALOG } from './furniture.js?mxj=0.3.1';
+import { characterView, avatarUrl } from './character.js?mxj=0.3.1';
+import { spriteInRoom, spriteSvg, poseFor, HAIR_STYLES, ACCESSORIES, LOOK_COLORS } from './sprite.js?mxj=0.3.1';
 import {
     HOUSE_SIZES, NOTE_KINDS, NOTE_PLACES,
     designHouse, createHome, comeHome, respond, postNote, replyToNote,
     markCharNotesRead, unreadFromChar, shouldAutoVisit, isAway,
     getLook, setLook, generateLook,
     WEATHERS, DIARY_MODES, getDiary, charTurn, unreadDiary, markDiaryRead, setDiaryMode, addUserEntry, writeCharDiary, shouldAutoDiary,
-} from './home.js?mxj=0.3.0';
-import { listConnectionProfiles, fetchManualModels, testConnection } from './api.js?mxj=0.3.0';
-import { createDecorator } from './decorate.js?mxj=0.3.0';
+} from './home.js?mxj=0.3.1';
+import { listConnectionProfiles, fetchManualModels, testConnection } from './api.js?mxj=0.3.1';
+import { createDecorator } from './decorate.js?mxj=0.3.1';
 
 const ROOT_ID = 'mxj-root';
 
@@ -571,32 +571,35 @@ function viewSettings(char, home) {
     return `
       <section class="mxj-card">
         <h3>生成用哪个 API</h3>
-        <label class="mxj-radio"><input type="radio" name="mxj-source" data-field="generationSource" value="follow" ${!independent ? 'checked' : ''}><span>跟随当前 API</span></label>
-        <label class="mxj-radio"><input type="radio" name="mxj-source" data-field="generationSource" value="independent" ${independent ? 'checked' : ''}><span>使用副 API</span></label>
-        ${independent ? `
-        <div class="mxj-sub">
-          <label class="mxj-field"><span>酒馆连接配置</span>
-            <div class="mxj-row"><select class="mxj-input mxj-grow" data-field="independentConnectionProfileId">${profileOptions}</select>
-            <button type="button" class="mxj-icon-btn" data-act="refresh-profiles" aria-label="刷新连接配置">${ICON.refresh}</button></div>
-          </label>
-          ${usingProfile ? '' : `
-          <label class="mxj-field"><span>API 地址</span>
-            <input type="text" class="mxj-input" data-field="independentApiBaseUrl" value="${esc(s.independentApiBaseUrl)}" inputmode="url" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="API 地址">
-          </label>
-          <label class="mxj-field"><span>API Key</span>
-            <input type="password" class="mxj-input" data-field="independentApiKey" value="${esc(s.independentApiKey)}" autocomplete="off" placeholder="API Key">
-          </label>
-          <button type="button" class="mxj-btn" data-act="fetch-models">拉取模型列表</button>`}
-          <label class="mxj-field"><span>模型 ID${usingProfile ? '（空着就用连接配置里的模型）' : ''}</span>
-            ${modelOptions}
-            <input type="text" class="mxj-input" data-field="independentApiModel" value="${esc(s.independentApiModel)}" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="模型 ID">
-          </label>
-          <div class="mxj-two">
-            <label class="mxj-field"><span>温度</span><input type="number" class="mxj-input" data-field="independentApiTemperature" value="${esc(s.independentApiTemperature)}" min="0" max="2" step="0.05" inputmode="decimal"></label>
-            <label class="mxj-field"><span>最大输出</span><input type="number" class="mxj-input" data-field="independentApiMaxTokens" value="${esc(s.independentApiMaxTokens)}" min="256" max="64000" step="256" inputmode="numeric"></label>
-          </div>
-        </div>` : ''}
+        <div class="mxj-places is-two" role="radiogroup" aria-label="生成用哪个 API">
+          <button type="button" role="radio" class="mxj-place${!independent ? ' is-on' : ''}" data-act="source" data-id="follow" aria-checked="${!independent}">跟随当前 API</button>
+          <button type="button" role="radio" class="mxj-place${independent ? ' is-on' : ''}" data-act="source" data-id="independent" aria-checked="${independent}">使用副 API</button>
+        </div>
+        <p class="mxj-muted">${independent ? '现在用的是下面配置的副 API。' : '现在跟着酒馆当前的 API 生成。想单独用一个 API，选「使用副 API」，再填下面的设置。'}</p>
         <button type="button" class="mxj-btn" data-act="test" ${state.busy ? 'disabled' : ''}>测试连接</button>
+      </section>
+      <section class="mxj-card${independent ? '' : ' is-dim'}">
+        <h3>副 API 设置</h3>
+        <label class="mxj-field"><span>酒馆连接配置（可选）</span>
+          <div class="mxj-row"><select class="mxj-input mxj-grow" data-field="independentConnectionProfileId">${profileOptions}</select>
+          <button type="button" class="mxj-icon-btn" data-act="refresh-profiles" aria-label="刷新连接配置">${ICON.refresh}</button></div>
+        </label>
+        ${usingProfile ? '' : `
+        <label class="mxj-field"><span>API 地址</span>
+          <input type="text" class="mxj-input" data-field="independentApiBaseUrl" value="${esc(s.independentApiBaseUrl)}" inputmode="url" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="API 地址">
+        </label>
+        <label class="mxj-field"><span>API Key</span>
+          <input type="password" class="mxj-input" data-field="independentApiKey" value="${esc(s.independentApiKey)}" autocomplete="off" placeholder="API Key">
+        </label>
+        <button type="button" class="mxj-btn" data-act="fetch-models" ${state.busy ? 'disabled' : ''}>拉取模型列表</button>`}
+        <label class="mxj-field"><span>模型 ID${usingProfile ? '（空着就用连接配置里的模型）' : ''}</span>
+          ${modelOptions}
+          <input type="text" class="mxj-input" data-field="independentApiModel" value="${esc(s.independentApiModel)}" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="模型 ID">
+        </label>
+        <div class="mxj-two">
+          <label class="mxj-field"><span>温度</span><input type="number" class="mxj-input" data-field="independentApiTemperature" value="${esc(s.independentApiTemperature)}" min="0" max="2" step="0.05" inputmode="decimal"></label>
+          <label class="mxj-field"><span>最大输出</span><input type="number" class="mxj-input" data-field="independentApiMaxTokens" value="${esc(s.independentApiMaxTokens)}" min="256" max="64000" step="256" inputmode="numeric"></label>
+        </div>
       </section>
       <section class="mxj-card">
         <h3>生成时读取</h3>
@@ -858,6 +861,11 @@ function onClick(event) {
             root.querySelector('[data-field="noteText"]')?.focus({ preventScroll: true });
             break;
         case 'post-note': void submitNote(char); break;
+        case 'source':
+            updateSettings({ generationSource: el.dataset.id === 'independent' ? 'independent' : 'follow' });
+            state.keepScroll = true;
+            render();
+            break;
         case 'refresh-profiles': state.keepScroll = true; render(); flash('已刷新连接配置'); break;
         case 'fetch-models': {
             const s = getSettings();

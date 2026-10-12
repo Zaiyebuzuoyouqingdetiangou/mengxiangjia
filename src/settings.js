@@ -1,5 +1,5 @@
 // 梦想家 · 设置与存档（存在酒馆的扩展设置里，换设备也在）
-import { ctx, clamp } from './util.js?mxj=0.3.0';
+import { ctx, clamp } from './util.js?mxj=0.3.1';
 
 export const MODULE_NAME = 'mengxiangjia';
 

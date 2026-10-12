@@ -1,10 +1,10 @@
 {
     "display_name": "梦想家",
     "loading_order": 120,
-    "js": "index.js?mxj=0.3.0",
-    "css": "style.css?mxj=0.3.0",
+    "js": "index.js?mxj=0.3.1",
+    "css": "style.css?mxj=0.3.1",
     "author": "Toto",
-    "version": "0.3.0",
+    "version": "0.3.1",
     "homePage": "https://github.com/Zaiyebuzuoyouqingdetiangou/mengxiangjia",
     "auto_update": true,
     "minimum_client_version": "1.13.0",

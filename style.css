@@ -271,13 +271,13 @@
 #mxj-root .mxj-chip.is-on.is-red { background: var(--mxj-red); border-color: var(--mxj-red); color: #FFFFFF; }
 
 /* 底部入口 */
-#mxj-root .mxj-entries { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; flex: none; }
+#mxj-root .mxj-entries { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; flex: none; }
 #mxj-root .mxj-entry {
     position: relative;
     display: flex; flex-direction: column; align-items: center; gap: 6px;
-    min-height: 72px; padding: 12px 4px;
+    min-height: 72px; padding: 12px 2px;
     border: 0; border-radius: 14px; background: var(--mxj-paper); color: var(--mxj-ink);
-    font-size: 13px; cursor: pointer;
+    font-size: 12px; cursor: pointer; white-space: nowrap;
 }
 #mxj-root .mxj-entry svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 #mxj-root .mxj-badge {
@@ -404,3 +404,55 @@
     justify-content: center; border: 1.5px dashed var(--mxj-green); background: var(--mxj-green-soft); color: var(--mxj-green);
 }
 #mxj-root .mxj-tile.is-make svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+
+/* 像素小人 */
+#mxj-root .mxj-sprite { cursor: pointer; outline: none; }
+#mxj-root .mxj-sprite > svg { animation: mxj-bob 1.6s steps(2, jump-none) infinite; transform-box: fill-box; }
+#mxj-root .mxj-sprite:focus-visible > svg { filter: drop-shadow(0 0 2px #FFFFFF) drop-shadow(0 0 1px var(--mxj-red)); }
+#mxj-root .mxj-zzz { animation: mxj-zzz 2.4s ease-in-out infinite; }
+@keyframes mxj-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1.5px); } }
+@keyframes mxj-zzz { 0%, 100% { opacity: .2; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+    #mxj-root .mxj-sprite > svg, #mxj-root .mxj-zzz { animation: none; }
+}
+#mxj-root .mxj-pixel { image-rendering: pixelated; display: block; width: 100%; height: auto; }
+#mxj-root .mxj-look-preview { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; background: var(--mxj-ground); border-radius: 12px; padding: 10px 8px 6px; }
+#mxj-root .mxj-look-pose { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+#mxj-root .mxj-look-pose svg { max-width: 64px; }
+#mxj-root .mxj-look-pose figcaption { font-size: 11px; color: var(--mxj-muted); }
+
+/* 交换日记 */
+#mxj-root .mxj-dot.is-red { background: var(--mxj-red); }
+#mxj-root .mxj-places.is-three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+#mxj-root .mxj-notebook, #mxj-root .mxj-diary-page {
+    border-radius: 6px 16px 16px 6px; border-left: 10px solid var(--mxj-green);
+    background-color: #FBF7EC;
+    background-image: repeating-linear-gradient(#FBF7EC 0, #FBF7EC 31px, #E3DCC8 31px, #E3DCC8 32px);
+    padding: 16px 14px; display: flex; flex-direction: column; gap: 18px;
+}
+#mxj-root .mxj-diary-page.is-writing { gap: 10px; }
+#mxj-root .mxj-diary-entry { position: relative; display: flex; flex-direction: column; gap: 2px; }
+#mxj-root .mxj-diary-meta { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--mxj-muted); }
+#mxj-root .mxj-diary-text { font-family: var(--mxj-hand); font-size: 20px; line-height: 32px; color: #1F2E38; white-space: pre-wrap; word-break: break-word; }
+#mxj-root .mxj-diary-entry.is-mine .mxj-diary-text { color: #3A1E19; }
+#mxj-root .mxj-diary-quote { margin: 2px 0; padding: 4px 10px; border-left: 3px solid var(--mxj-line); font-size: 13px; line-height: 1.5; color: var(--mxj-muted); background: rgba(255, 255, 255, .5); }
+#mxj-root .mxj-diary-quote .mxj-link-btn { min-height: 28px; padding: 0 4px; }
+#mxj-root .mxj-stamp {
+    align-self: flex-end; width: 62px; height: 62px; border-radius: 31px;
+    border: 2px solid var(--mxj-red); color: var(--mxj-red);
+    font-family: var(--mxj-display); font-size: 14px; line-height: 1.15; text-align: center;
+    display: flex; align-items: center; justify-content: center; padding: 6px;
+    transform: rotate(-12deg); opacity: .85;
+}
+#mxj-root .mxj-diary-empty { font-family: var(--mxj-hand); font-size: 18px; line-height: 32px; color: var(--mxj-muted); }
+#mxj-root .mxj-diary-input {
+    background: transparent; border: 1px dashed #B9A98A; border-radius: 8px;
+    font-family: var(--mxj-hand); font-size: 19px; line-height: 32px; color: #3A1E19; resize: vertical; min-height: 160px;
+}
+#mxj-root .mxj-quote-list { display: flex; flex-direction: column; gap: 6px; }
+#mxj-root .mxj-quote-item {
+    text-align: left; min-height: 44px; padding: 8px 10px; border: 1px solid var(--mxj-line-soft); border-radius: 10px;
+    background: var(--mxj-white); color: var(--mxj-ink); font-size: 13px; line-height: 1.5; cursor: pointer;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+#mxj-root .mxj-quote-item b { margin-right: 6px; }

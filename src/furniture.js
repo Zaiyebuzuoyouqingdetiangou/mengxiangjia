@@ -1,6 +1,6 @@
 // 梦想家 · 家具图库与房间绘制
 // 房间是正面剖面图：viewBox 360×300，墙 0–210，地板 210–300。
-import { esc, shade, hexOr, luminance } from './util.js?mxj=0.2.0';
+import { esc, shade, hexOr, luminance } from './util.js?mxj=0.3.0';
 
 export const SCENE_W = 360;
 export const SCENE_H = 300;
@@ -384,7 +384,7 @@ function itemScale(item) {
  * room.arranged 为真时完全按用户摆的位置画；否则自动排开，避免重叠。
  * @returns {{svg:string, anchors:Record<string,{x:number,y:number}>, positions:Record<string,number>}}
  */
-export function renderRoom(room, furniture, palette, { night = false, selectedId = '', decorating = false } = {}) {
+export function renderRoom(room, furniture, palette, { night = false, selectedId = '', decorating = false, figure = null } = {}) {
     const pal = {
         wall: hexOr(room?.wall, hexOr(palette?.wall, DEFAULT_PALETTE.wall)),
         floor: hexOr(room?.floor, hexOr(palette?.floor, DEFAULT_PALETTE.floor)),
@@ -465,10 +465,17 @@ export function renderRoom(room, furniture, palette, { night = false, selectedId
             const label = `${it.name || CATALOG[it.type].label}`;
             const cls = `mxj-furniture${it.id === selectedId ? ' mxj-selected' : ''}${decorating ? ' is-draggable' : ''}`;
             svg += `<g class="${cls}" data-act="furniture" data-id="${esc(it.id)}" role="button" tabindex="0" aria-label="${esc(label)}"${transform}>${drawn.svg}</g>`;
-            anchors[it.id] = { x: it._x, y: pivot + (drawn.top - pivot) * scale + dy };
+            anchors[it.id] = {
+                x: it._x,
+                y: pivot + (drawn.top - pivot) * scale + dy,
+                type: it.type,
+                scale,
+                floor: layer === 'wall' ? undefined : pivotY(key === 'back' || key === 'front' ? key : layer),
+            };
             positions[it.id] = Math.round(it._x / SCENE_W * 1000) / 10;
         }
     }
+    if (typeof figure === 'function') svg += figure(anchors) || '';
     if (night) svg += rect(0, 0, SCENE_W, SCENE_H, '#0B1530', 'opacity="0.18" pointer-events="none"');
     svg += '</svg>';
     return { svg, anchors, positions };
